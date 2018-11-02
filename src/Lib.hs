@@ -8,8 +8,8 @@ someFunc = do
 
 data Event =
     Event String
-  | Tau
-  | Check -- 成功終了
+--  | Tau
+--  | Check -- 成功終了
   deriving (Eq)
 
 data Process =
@@ -20,8 +20,8 @@ data Process =
 
 instance Show Event where
   show (Event e) = e
-  show Tau = "Tau"
-  show Check = "Check"
+--  show Tau = "Tau"
+--  show Check = "Check"
 
 instance Show Process where
   show (Prefix e p) = show e ++ " -> " ++ show p
