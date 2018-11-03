@@ -3,13 +3,13 @@ module Type where
 data Event =
     Event String
   | Tau
---  | Check -- 成功終了
+  | Check -- 成功終了
   deriving (Eq)
 
 instance Show Event where
   show (Event e) = e
   show Tau = "Tau"
-  --show Check = "Check"
+  show Check = "Check"
 
 
 data Process =
@@ -18,16 +18,20 @@ data Process =
   | IntCh Process Process
   | If BooleanExpression Process Process
   | Guard BooleanExpression Process
+  | Sequential Process Process
+  | Skip
   | Stop
   deriving (Eq)
 
 instance Show Process where
-  show (Prefix e p) = show e ++ " -> " ++  if isPrefix p then show p else "(" ++ show p ++ ")"
+  show (Prefix e p) = show e ++ " -> " ++  if needBracket p then "(" ++ show p ++ ")" else show p
   show (ExtCh p1 p2) = "(" ++ show p1 ++ ") [] (" ++ show p2 ++ ")"
-  show Stop = "Stop"
   show (IntCh p1 p2) = "(" ++ show p1 ++ ") |~| (" ++ show p2 ++ ")"
   show (If b p1 p2) = "if " ++ show b ++ " then " ++ show p1 ++ " else " ++ show p2
   show (Guard b p) = show b ++ "&(" ++ show p ++ ")"
+  show (Sequential p1 p2) = "(" ++ show p1 ++ ") ; (" ++ show p2 ++ ")"
+  show Skip = "Skip"
+  show Stop = "Stop"
 
 data IntExpression =
     Num Int
@@ -59,6 +63,8 @@ instance Show BooleanExpression where
 showExpression :: Show a => String -> a -> a -> String
 showExpression op n1 n2 = "(" ++ show n1 ++ op ++ show n2 ++ ")"
 
-isPrefix :: Process -> Bool
-isPrefix (Prefix _ _) = True
-isPrefix _            = False
+needBracket :: Process -> Bool
+needBracket (Prefix _ _) = False
+needBracket Stop         = False
+needBracket Skip         = False
+needBracket _            = True

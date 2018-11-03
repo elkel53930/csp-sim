@@ -19,6 +19,9 @@ guard1 = Prefix (Event "G") $ Guard (Equal (Num 1) (Add (Num 1) (Num 1))) prefix
 guard2 = Guard (Equal (Num 1) (Num 1)) prefixB
 extCh2 = ExtCh guard1 guard2
 
+skip1  = Sequential (Prefix (Event "B") (Prefix (Event "A") Skip)) (prefixB)
+skip2  = Sequential (ExtCh (Prefix (Event "C") Stop) (Prefix (Event "B") (Prefix (Event "A") Skip))) (prefixB)
+
 tests :: [(Process, [Event])]
 tests = [ (prExtCh, evExtCh1)
         , (prExtCh, evExtCh2)
@@ -26,10 +29,12 @@ tests = [ (prExtCh, evExtCh1)
         , (guard1 , [Event "G"])
         , (guard2 , [Event "B"])
         , (extCh2 , [Event "B"])
+        , (skip1  , [Event "B", Event "A", Event "B"])
+        , (skip2  , [Event "C"])
         ]
 
 doTest :: (Process, [Event]) -> IO Process
-doTest (p, es) = foldM getNextProcess p es
+doTest (p, es) = foldM step p es
 
 main :: IO ()
 main = do
