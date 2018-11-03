@@ -37,7 +37,7 @@ instance Show Process where
   show (IntCh p1 p2) = "(" ++ show p1 ++ ") |~| (" ++ show p2 ++ ")"
 
 runProcess :: Process -> IO ()
-runProcess Stop = putStrLn "Stop"
+runProcess Stop = putStrLn $ show Stop
 runProcess p
   | isAcceptableEvent p Tau = do {putStrLn $ show Tau; p <- getNextProcess p Tau; runProcess p}
   | otherwise               = do
