@@ -3,7 +3,7 @@ module Lib where
 import System.Random
 import Control.Monad
 
-sample = Prefix (Event "I") (IntCh (Prefix (Event "A") Stop) (Prefix (Event "B") Stop))
+sample = Prefix (Event "I") (ExtCh (Prefix (Event "C") Stop) (IntCh (Prefix (Event "A") Stop) (Prefix (Event "B") Stop)))
 
 someFunc :: IO ()
 someFunc = runProcess sample
@@ -45,7 +45,7 @@ runProcess p
       putStrLn "Choose event > "
       e <- getLine
       if isAcceptableEvent p (Event e)
-        then do {putStrLn (e ++ "is accepted."); p <- getNextProcess p (Event e); runProcess p}
+        then do {putStrLn (e ++ " is accepted."); p <- getNextProcess p (Event e); runProcess p}
         else do {putStrLn "Cannot accept."; runProcess $ p}
 
 isAcceptableEvent :: Process -> Event -> Bool
@@ -56,6 +56,11 @@ isAcceptableEvent (IntCh _ _) e = e == Tau
 
 getNextProcess :: Process -> Event -> IO Process
 getNextProcess (Prefix ev pr) e = if ev == e then return pr else error "Invalid event."
+getNextProcess (ExtCh p1 p2) Tau = case (isAcceptableEvent p1 Tau, isAcceptableEvent p2 Tau) of
+    (True, False)  -> do{p<-getNextProcess p1 Tau; return (ExtCh p p2)}
+    (False, True)  -> do{p<-getNextProcess p2 Tau; return (ExtCh p1 p)}
+    (True, True)   -> do{p<-chooseRandom (p1,p2); getNextProcess p Tau}
+    (False, False) -> error "Invalid event."
 getNextProcess (ExtCh p1 p2) e = case (isAcceptableEvent p1 e, isAcceptableEvent p2 e) of
     (True, False)  -> getNextProcess p1 e
     (False, True)  -> getNextProcess p2 e
