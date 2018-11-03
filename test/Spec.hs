@@ -13,12 +13,19 @@ prefixC = Prefix (Event "C") Stop
 intCh1 = IntCh prefixA prefixB
 extCh1 = ExtCh prefixC intCh1
 if1    = If (Equal (Num 1) (Add (Num 1) (Num 1))) prefixA extCh1
-evIf1 = [Event "C"]
+evIf1  = [Event "C"]
+
+guard1 = Prefix (Event "G") $ Guard (Equal (Num 1) (Add (Num 1) (Num 1))) prefixA
+guard2 = Guard (Equal (Num 1) (Num 1)) prefixB
+extCh2 = ExtCh guard1 guard2
 
 tests :: [(Process, [Event])]
 tests = [ (prExtCh, evExtCh1)
         , (prExtCh, evExtCh2)
         , (if1    , evIf1)
+        , (guard1 , [Event "G"])
+        , (guard2 , [Event "B"])
+        , (extCh2 , [Event "B"])
         ]
 
 doTest :: (Process, [Event]) -> IO Process
@@ -27,5 +34,6 @@ doTest (p, es) = foldM getNextProcess p es
 main :: IO ()
 main = do
   forM_ tests (\t -> do
+    putStrLn $ show t
     p <- doTest t
     putStrLn $ show p)

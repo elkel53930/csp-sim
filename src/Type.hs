@@ -17,6 +17,7 @@ data Process =
   | ExtCh Process Process
   | IntCh Process Process
   | If BooleanExpression Process Process
+  | Guard BooleanExpression Process
   | Stop
   deriving (Eq)
 
@@ -26,6 +27,7 @@ instance Show Process where
   show Stop = "Stop"
   show (IntCh p1 p2) = "(" ++ show p1 ++ ") |~| (" ++ show p2 ++ ")"
   show (If b p1 p2) = "if " ++ show b ++ " then " ++ show p1 ++ " else " ++ show p2
+  show (Guard b p) = show b ++ "&(" ++ show p ++ ")"
 
 data IntExpression =
     Num Int

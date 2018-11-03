@@ -5,7 +5,7 @@ import System.Random
 import Control.Monad
 
 someFunc :: IO ()
-someFunc = runProcess if1
+someFunc = undefined
 
 execBooleanExpression :: BooleanExpression -> Bool
 execBooleanExpression (Equal n1 n2) = execIntExpression n1 == execIntExpression n2
@@ -41,6 +41,7 @@ isAcceptableEvent (Prefix ev _) e = ev == e
 isAcceptableEvent (ExtCh p1 p2) e = isAcceptableEvent p1 e || isAcceptableEvent p2 e
 isAcceptableEvent (IntCh _ _) e = e == Tau
 isAcceptableEvent (If b p1 p2) e = if execBooleanExpression b then isAcceptableEvent p1 e else isAcceptableEvent p2 e
+isAcceptableEvent (Guard b p) e = isAcceptableEvent (If b p Stop) e
 
 getNextProcess :: Process -> Event -> IO Process
 getNextProcess (Prefix ev pr) e = if ev == e then return pr else error "Invalid event."
@@ -60,6 +61,7 @@ getNextProcess (IntCh p1 p2) e = if e == Tau
 getNextProcess (If b p1 p2) e = if execBooleanExpression b
   then getNextProcess p1 e
   else getNextProcess p2 e
+getNextProcess (Guard b p) e = getNextProcess (If b p Stop) e
 
 chooseRandom :: (a,a) -> IO a
 chooseRandom (a1,a2) = do
