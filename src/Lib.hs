@@ -1,45 +1,32 @@
 module Lib where
 
+import Type
 import System.Random
 import Control.Monad
 
-sample = Prefix (Event "I") (ExtCh (Prefix (Event "C") Stop) (IntCh (Prefix (Event "A") Stop) (Prefix (Event "B") Stop)))
-
 someFunc :: IO ()
-someFunc = runProcess sample
+someFunc = runProcess if1
 
-data Event =
-    Event String
-  | Tau
---  | Check -- 成功終了
-  deriving (Eq)
+execBooleanExpression :: BooleanExpression -> Bool
+execBooleanExpression (Equal n1 n2) = execIntExpression n1 == execIntExpression n2
+execBooleanExpression (GreaterThan n1 n2) = execIntExpression n1 > execIntExpression n2
+execBooleanExpression (LessThan n1 n2) = execIntExpression n1 < execIntExpression n2
 
-data Process =
-    Prefix Event Process
-  | ExtCh Process Process
-  | IntCh Process Process
-  | Stop
-  deriving (Eq)
-
-instance Show Event where
-  show (Event e) = e
-  show Tau = "Tau"
---  show Check = "Check"
-
-isPrefix :: Process -> Bool
-isPrefix (Prefix _ _) = True
-isPrefix _            = False
-
-instance Show Process where
-  show (Prefix e p) = show e ++ " -> " ++  if isPrefix p then show p else "(" ++ show p ++ ")"
-  show (ExtCh p1 p2) = "(" ++ show p1 ++ ") [] (" ++ show p2 ++ ")"
-  show Stop = "Stop"
-  show (IntCh p1 p2) = "(" ++ show p1 ++ ") |~| (" ++ show p2 ++ ")"
+execIntExpression :: IntExpression -> Int
+execIntExpression (Num n) = n
+execIntExpression (Add n1 n2) = execIntExpression n1 + execIntExpression n2
+execIntExpression (Sub n1 n2) = execIntExpression n1 - execIntExpression n2
+execIntExpression (Mul n1 n2) = execIntExpression n1 * execIntExpression n2
+execIntExpression (Div n1 n2) = execIntExpression n1 `div` execIntExpression n2
 
 runProcess :: Process -> IO ()
 runProcess Stop = putStrLn $ show Stop
 runProcess p
-  | isAcceptableEvent p Tau = do {putStrLn $ show Tau; p <- getNextProcess p Tau; runProcess p}
+  | isAcceptableEvent p Tau = do
+      putStrLn $ show p
+      putStrLn $ show Tau
+      p <- getNextProcess p Tau
+      runProcess p
   | otherwise               = do
       putStrLn $ show p
       putStrLn "Choose event > "
@@ -53,6 +40,7 @@ isAcceptableEvent Stop _ = False
 isAcceptableEvent (Prefix ev _) e = ev == e
 isAcceptableEvent (ExtCh p1 p2) e = isAcceptableEvent p1 e || isAcceptableEvent p2 e
 isAcceptableEvent (IntCh _ _) e = e == Tau
+isAcceptableEvent (If b p1 p2) e = if execBooleanExpression b then isAcceptableEvent p1 e else isAcceptableEvent p2 e
 
 getNextProcess :: Process -> Event -> IO Process
 getNextProcess (Prefix ev pr) e = if ev == e then return pr else error "Invalid event."
@@ -69,6 +57,9 @@ getNextProcess (ExtCh p1 p2) e = case (isAcceptableEvent p1 e, isAcceptableEvent
 getNextProcess (IntCh p1 p2) e = if e == Tau
   then do{p<-chooseRandom (p1,p2); return p}
   else error "Invalid event."
+getNextProcess (If b p1 p2) e = if execBooleanExpression b
+  then getNextProcess p1 e
+  else getNextProcess p2 e
 
 chooseRandom :: (a,a) -> IO a
 chooseRandom (a1,a2) = do
