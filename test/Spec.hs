@@ -2,6 +2,7 @@ import Lib
 import Type
 
 import Control.Monad
+import Data.Map
 
 prExtCh = ExtCh (Prefix (Event "A") . Prefix (Event "B") $ Stop) (Prefix (Event "C") $ Stop)
 evExtCh1 = [Event "A", Event "B"]
@@ -33,12 +34,14 @@ tests = [ (prExtCh, evExtCh1)
         , (skip2  , [Event "C"])
         ]
 
-doTest :: (Process, [Event]) -> IO Process
-doTest (p, es) = foldM step p es
+ps = fromList []
+
+doTest :: Processes -> (Process, [Event]) -> IO Process
+doTest ps (p, es) = foldM (step ps) p es
 
 main :: IO ()
 main = do
   forM_ tests (\t -> do
     putStrLn $ show t
-    p <- doTest t
+    p <- doTest ps t
     putStrLn $ show p)

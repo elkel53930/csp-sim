@@ -1,5 +1,7 @@
 module Type where
 
+import Data.Map
+
 data Event =
     Event String
   | Tau
@@ -14,6 +16,7 @@ instance Show Event where
 
 data Process =
     Prefix Event Process
+  | PName Name
   | ExtCh Process Process
   | IntCh Process Process
   | If BooleanExpression Process Process
@@ -25,6 +28,7 @@ data Process =
 
 instance Show Process where
   show (Prefix e p) = show e ++ " -> " ++  if needBracket p then "(" ++ show p ++ ")" else show p
+  show (PName n) = n
   show (ExtCh p1 p2) = "(" ++ show p1 ++ ") [] (" ++ show p2 ++ ")"
   show (IntCh p1 p2) = "(" ++ show p1 ++ ") |~| (" ++ show p2 ++ ")"
   show (If b p1 p2) = "if " ++ show b ++ " then " ++ show p1 ++ " else " ++ show p2
@@ -32,6 +36,9 @@ instance Show Process where
   show (Sequential p1 p2) = "(" ++ show p1 ++ ") ; (" ++ show p2 ++ ")"
   show Skip = "Skip"
   show Stop = "Stop"
+
+type Name = String
+type Processes = Map Name Process
 
 data IntExpression =
     Num Int
@@ -67,4 +74,5 @@ needBracket :: Process -> Bool
 needBracket (Prefix _ _) = False
 needBracket Stop         = False
 needBracket Skip         = False
+needBracket (PName _)    = False
 needBracket _            = True
