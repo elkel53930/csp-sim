@@ -61,18 +61,20 @@ runAutoEvent ps p
       return p'
 
 isAcceptableEvent :: Processes -> Process -> Event -> Bool
-isAcceptableEvent _ Stop _ = False
-isAcceptableEvent _ Skip e = e == Check
-isAcceptableEvent _ (Prefix ev _) e = ev == e
+isAcceptableEvent _  Stop _ = False
+isAcceptableEvent _  Skip e = e == Check
+isAcceptableEvent _  (Prefix ev _) e = ev == e
 isAcceptableEvent ps (ExtCh p q) e = isAcceptableEvent ps p e || isAcceptableEvent ps q e
-isAcceptableEvent _ (IntCh _ _) e = e == Tau
+isAcceptableEvent _  (IntCh _ _) e = e == Tau
 isAcceptableEvent ps (If b p q) e = if execBooleanExpression b then isAcceptableEvent ps p e else isAcceptableEvent ps q e
 isAcceptableEvent ps (Guard b p) e = isAcceptableEvent ps (If b p Stop) e
+isAcceptableEvent ps (Sequential p _) Tau = isAcceptableEvent ps p Check
 isAcceptableEvent ps (Sequential p _) e = isAcceptableEvent ps p e
 isAcceptableEvent ps (PName n) e = isAcceptableEvent ps (ps ! n) e
+isAcceptableEvent _  Omega _ = False
 
 getNextProcess :: Processes -> Process -> Event -> IO Process
-getNextProcess _ (Prefix ev pr) e = if ev == e then return pr else error "Invalid event."
+getNextProcess _  (Prefix ev pr) e = if ev == e then return pr else error "Invalid event."
 getNextProcess ps (PName n) e = getNextProcess ps (ps ! n) e
 getNextProcess ps (ExtCh p1 p2) Tau = case (isAcceptableEvent ps p1 Tau, isAcceptableEvent ps p2 Tau) of
     (True, False)  -> do{p<-getNextProcess ps p1 Tau; return (ExtCh p p2)}
@@ -91,10 +93,11 @@ getNextProcess ps (If b p1 p2) e = if execBooleanExpression b
   then getNextProcess ps p1 e
   else getNextProcess ps p2 e
 getNextProcess ps (Guard b p) e = getNextProcess ps (If b p Stop) e
-getNextProcess ps (Sequential p q) Check = if isAcceptableEvent ps p Check
+getNextProcess ps (Sequential p q) Tau = if isAcceptableEvent ps p Check
   then return q
   else error "Invalid event."
 getNextProcess ps (Sequential p q) e = do{p'<-getNextProcess ps p e; return $ Sequential p' q}
+getNextProcess _ Skip Check = return Omega
 getNextProcess _ Skip _ = error "Invalid event. State is Skip."
 getNextProcess _ Stop _ = error "Invalid event. State is Stop."
 

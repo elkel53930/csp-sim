@@ -22,6 +22,7 @@ data Process =
   | If BooleanExpression Process Process
   | Guard BooleanExpression Process
   | Sequential Process Process
+  | Omega
   | Skip
   | Stop
   deriving (Eq)
@@ -34,6 +35,7 @@ instance Show Process where
   show (If b p1 p2) = "if " ++ show b ++ " then " ++ show p1 ++ " else " ++ show p2
   show (Guard b p) = show b ++ "&(" ++ show p ++ ")"
   show (Sequential p1 p2) = "(" ++ show p1 ++ ") ; (" ++ show p2 ++ ")"
+  show Omega = "Omega"
   show Skip = "Skip"
   show Stop = "Stop"
 
@@ -66,13 +68,13 @@ instance Show BooleanExpression where
   show (GreaterThan n1 n2) = showExpression ">" n1 n2
   show (LessThan n1 n2)    = showExpression "<" n1 n2
 
-
 showExpression :: Show a => String -> a -> a -> String
 showExpression op n1 n2 = "(" ++ show n1 ++ op ++ show n2 ++ ")"
 
 needBracket :: Process -> Bool
 needBracket (Prefix _ _) = False
-needBracket Stop         = False
+needBracket Omega        = False
 needBracket Skip         = False
+needBracket Stop         = False
 needBracket (PName _)    = False
 needBracket _            = True
