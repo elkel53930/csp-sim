@@ -5,14 +5,27 @@ module Lib (
   ) where
 
 import Type
+import Parse
 import System.Random
 import Control.Monad
 import Data.Map
+import System.IO
+import System.Environment
+import Text.ParserCombinators.Parsec
 
 ps = fromList [("Test", Sequential (ExtCh (Prefix (Event "C") Stop) (Prefix (Event "B") (Prefix (Event "A") Skip))) (Prefix (Event "B") Stop))]
 
 someFunc :: IO ()
-someFunc = runProcess ps $ PName "Test"
+someFunc = do
+  args <- getArgs
+  handle <- openFile (head args) ReadMode
+  source <- hGetContents handle
+  let ps = parse processes (head args) source
+  putStrLn . show $ ps 
+  case ps of
+    Right ps' -> runProcess ps' $ PName "Entry"
+    Left m -> error $ show m
+
 
 execBooleanExpression :: BooleanExpression -> Bool
 execBooleanExpression (Equal n1 n2) = execIntExpression n1 == execIntExpression n2
