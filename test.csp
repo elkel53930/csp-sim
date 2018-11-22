@@ -1,2 +1,2 @@
-Entry = (a -> b -> $Stop [] c -> d -> Sub)
-Sub = e -> ( f -> Entry |~| g -> Entry )
+Entry = ( a -> b -> $Stop [] c -> d -> Sub )
+Sub = e -> ( f -> Entry |~| ( g -> h -> $Skip ; Entry) )

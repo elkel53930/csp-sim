@@ -2,6 +2,7 @@ module Lib (
     step
   , runProcess
   , someFunc
+  , processes
   ) where
 
 import Type
@@ -21,7 +22,7 @@ someFunc = do
   handle <- openFile (head args) ReadMode
   source <- hGetContents handle
   let ps = parse processes (head args) source
-  putStrLn . show $ ps 
+  putStrLn . show $ ps
   case ps of
     Right ps' -> runProcess ps' $ PName "Entry"
     Left m -> error $ show m
