@@ -24,6 +24,65 @@ processExpression = do
   return (n,p)
 
 process :: Parser Process
+process   = try pName
+        <|> try stop
+        <|> try skip
+
+intCh :: Parser Process
+intCh =   try process
+      <|> try ic
+  where
+    ic = do
+    {
+      p1 <- intCh;
+      string "|~|";
+      p2 <- process;
+      return $ IntCh p1 p2;
+    }
+
+extCh :: Parser Process
+extCh =   try intCh
+      <|> try ec
+  where
+    ec = do
+    {
+      p1 <- extCh;
+      string "[]";
+      p2 <- intCh;
+      return $ ExtCh p1 p2;
+    }
+
+sequential :: Parser Process
+sequential =   try pName
+           <|> try extCh
+  where
+    seq = do
+      {
+        p1 <- sequential;
+        string ";";
+        p2 <- extCh;
+        return $ Sequential p1 p2;
+      }
+
+prefix :: Parser Process
+prefix =   try sequential
+       <|> try pr
+  where
+    pr = do
+      {
+        e <- event;
+        string "->";
+        p <- prefix;
+        return $ Prefix e p;
+      }
+
+pName :: Parser Process
+pName = do
+  n <- processName
+  return $ PName n
+
+{-
+process :: Parser Process
 process = try prefix
       <|> try pName
       <|> try extCh
@@ -40,11 +99,6 @@ prefix = do
   sp
   p <- process
   return $ Prefix e p
-
-pName :: Parser Process
-pName = do
-  n <- processName
-  return $ PName n
 
 extCh :: Parser Process
 extCh = do
@@ -84,6 +138,7 @@ sequential = do
   sp
   char ')'
   return $ Sequential p1 p2
+-}
 
 skip :: Parser Process
 skip = do

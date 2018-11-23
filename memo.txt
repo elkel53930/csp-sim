@@ -1,0 +1,12 @@
+prefix      ::= event '->' prefix
+              | sequential
+sequential  ::= sequential ';' extch
+              | extch
+extch       ::= extch '[]' intch
+              | intch
+intch       ::= intch '|~|' process
+              | process
+process     ::= parens prefix | pName
+
+
+a -> b -> Stop [] c -> d -> Skip ; e -> Stop
